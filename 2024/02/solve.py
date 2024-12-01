@@ -1,13 +1,21 @@
 import functools, operator
-from typing import Tuple, List
+from collections import defaultdict
+from typing import Tuple, List, Dict
 
 def __add_to_arr(arr, part):
     arr.append(int(part.strip()))
 
-# Expects to receive an already sorted list. I'm not gonna try to do a once through thing here just yet
+def __process_right_list(right: List[int]) -> Dict[int, int]:
+    counts = defaultdict(int)
+    for location_id in right:
+        counts[location_id] = counts[location_id] + 1
+    return counts
+
+# Doesnt need to be sorted for this one
 def execute(left: List[int], right: List[int]) -> int:
-    distances = [abs(l[0] - l[1]) for l in zip(left, right)]
-    return functools.reduce(operator.add, distances)
+    right_counts = __process_right_list(right)
+    similarity = [l * right_counts[l] for l in left]
+    return functools.reduce(operator.add, similarity)
 
 def process_file_input() -> Tuple[List[int], List[int]]:
     left = []
@@ -18,7 +26,7 @@ def process_file_input() -> Tuple[List[int], List[int]]:
             __add_to_arr(left, split_up[0])
             __add_to_arr(right, split_up[1])
 
-    return (sorted(left), sorted(right))
+    return (left, right)
 
 if __name__ == "__main__":
     file_input = process_file_input()
