@@ -1,33 +1,35 @@
-use std::{fs::read_to_string, iter::zip, path::absolute};
+use std::{fs::read_to_string, error::Error};
 
-fn process_file() -> (Vec<u32>, Vec<u32>) {
-    let mut left = Vec::<u32>::new();
-    let mut right = Vec::<u32>::new();
-    let lines: Vec<String> = read_to_string("input.txt")
-        .unwrap()
-        .lines()
-        .map(String::from)
-        .collect();
+fn process_file() -> Result<(Vec<u32>, Vec<u32>), Box<dyn Error>> {
+    let content = read_to_string("input.txt")?; // Store the string in a variable
+    let lines = content.lines(); // Use the lines iterator
 
-    for line in lines {
-        let split: Vec<&str> = line.split_whitespace().collect();
-        left.push(split[0].parse::<u32>().unwrap());
-        right.push(split[1].parse::<u32>().unwrap());
-    }
-    left.sort();
-    right.sort();
-    (left, right)
+    let (mut left, mut right): (Vec<u32>, Vec<u32>) = lines
+        .map(|line| {
+            let mut parts = line.split_whitespace();
+            let l = parts.next().ok_or("Missing left value")?.parse::<u32>()?;
+            let r = parts.next().ok_or("Missing right value")?.parse::<u32>()?;
+            Ok((l, r))
+        })
+        .collect::<Result<Vec<_>, Box<dyn Error>>>()?
+        .into_iter()
+        .unzip();
+
+    left.sort_unstable();
+    right.sort_unstable();
+
+    Ok((left, right))
 }
 
-fn solve_01(left: Vec<u32>, right: Vec<u32>) -> u32 {
+fn solve_01(left: &[u32], right: &[u32]) -> u32 {
     left.iter().zip(right).map(|(a, b)| {
-        println!("{} {}", a, b);
-        a.abs_diff(b)
+        a.abs_diff(*b)
     }).sum()
 }
 
-fn main() {
-    let (left, right) = process_file();
+fn main() -> Result<(), Box<dyn Error>> {
+    let (left, right) = process_file()?;
 
-    println!("{}", solve_01(left, right));
+    println!("{}", solve_01(&left, &right));
+    Ok(())
 }
