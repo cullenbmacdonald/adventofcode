@@ -79,7 +79,54 @@ def execute_01(matrix: List[List[str]]) -> int:
     return match_count
 
 
+def get_letter(matrix: List[List[str]], x: int, y: int, check: List[int]):
+    check_x = check[0]
+    check_y = check[1]
+
+    if check_x < 0 or check_x >= len(matrix[0]):
+        return None
+    if check_y < 0 or check_y >= len(matrix):
+        return None
+    try:
+        return matrix[check_y][check_x]
+    except IndexError:
+        from pdb import set_trace; set_trace()
+        pass
+
+
+def execute_02(matrix: List[List[int]]):
+    # similar approach to 01, but look for A and then look for S or M in the corners...in the right order..
+    start = "A"
+    match_count = 0
+
+    # Def brute force and could have made it....less readable? but cleverer. oh well
+    for y, row in enumerate(matrix):
+        for x, letter in enumerate(row):
+            if letter != start:
+                continue
+
+            top_left_i = [x - 1, y - 1]
+            top_right_i = [x + 1, y - 1]
+            bot_left_i = [x - 1, y + 1]
+            bot_right_i = [x + 1, y + 1]
+
+            top_left = get_letter(matrix, x, y, top_left_i)
+            bot_right = get_letter(matrix, x, y, bot_right_i)
+            top_right = get_letter(matrix, x, y, top_right_i)
+            bot_left = get_letter(matrix, x, y, bot_left_i)
+
+            if None in [top_left, bot_right, top_right, bot_left]:
+                continue
+
+            criss = sorted([top_left, bot_right])
+            cross = sorted([top_right, bot_left])
+            if criss == ["M", "S"] and cross == ["M", "S"]:
+                match_count += 1
+
+    return match_count
+
+
 if __name__ == "__main__":
     matrix = build_matrix("input.txt")
-    print(execute_01(matrix))
-    #execute_02(path)
+    #print(execute_01(matrix))
+    print(execute_02(matrix))
