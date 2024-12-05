@@ -1,6 +1,8 @@
 import argparse
 from typing import Any, List, Dict
 
+rules_db = {}
+
 class Page():
     def __init__(self, num: int):
         self.num = num
@@ -9,7 +11,17 @@ class Page():
         self.appears_after = set()
 
     def __lt__(self, other) -> bool:
-        return other.num in self.appears_before or self.num in other.appears_after
+        return other.num in self.appears_before 
+
+    def __eq__(self, other) -> bool:
+        if type(other) == int:
+            return self.num == other
+        elif type(other) == Page:
+            return self.num == other.num
+        super()
+
+    def __repr__(self) -> str:
+        return str(self.num)
 
 
 def process_file(file_path: str) -> tuple[str, str]:
@@ -27,20 +39,30 @@ def process_file(file_path: str) -> tuple[str, str]:
                 rules.append(line.strip())
     return (rules, updates)
 
-def build_rules(raw: List[str]) -> Dict[int, Dict[str, List[int]]]:
-    rules_hash = {}
+
+def build_rules(raw: List[str]) -> None:
     for line in raw:
         split = line.split("|")
-        before = int(split[0])
-        after = int(split[1])
-        existing_before = rules_hash.get(before, {"BEFORE": set(), "AFTER": set()})
-        existing_after = rules_hash.get(after, {"BEFORE": set(), "AFTER": set()})
-        existing_before["BEFORE"].add(after)
-        existing_after["AFTER"].add(before)
-        rules_hash[before] = existing_before
-        rules_hash[after] = existing_after
+        before_id = int(split[0])
+        after_id = int(split[1])
 
-    return rules_hash
+        before = rules_db.get(before_id, Page(before_id))
+        after = rules_db.get(after_id, Page(after_id))
+
+        before.appears_before.add(after.num)
+        rules_db[before.num] = before
+        after.appears_after.add(before.num)
+        rules_db[after.num] = after
+
+
+def filter_valid_updates(rules: Dict[int, Page], updates: List[int]) -> List[List[int]]:
+    valid_updates = []
+    for update in updates:
+        og = [u for u in update]
+        sorted_update = sorted([rules_db[u] for u in update])
+        if og == sorted_update:
+            valid_updates.append(og)
+    return valid_updates
 
 
 def solve_part_2(file_path: str):
@@ -49,9 +71,12 @@ def solve_part_2(file_path: str):
 
 def solve_part_1(file_path: str):
     rules_raw, updates_raw = process_file(file_path)    
+    updates = []
+    for update in updates_raw:
+        updates.append([int(page) for page in update.split(",")])
     rules_hash = build_rules(rules_raw)
-    print(rules_hash)
-
+    valid_updates = filter_valid_updates(rules_hash, updates)
+    print(valid_updates)
 
 
 #### TEMPLATE FOR EACH DAY BEGIN NOW
