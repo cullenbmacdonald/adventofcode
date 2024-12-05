@@ -55,18 +55,38 @@ def build_rules(raw: List[str]) -> None:
         rules_db[after.num] = after
 
 
-def filter_valid_updates(rules: Dict[int, Page], updates: List[int]) -> List[List[int]]:
+def filter_valid_updates(rules: Dict[int, Page], updates: List[int]) -> List[List[Page]]:
     valid_updates = []
     for update in updates:
         og = [u for u in update]
         sorted_update = sorted([rules_db[u] for u in update])
         if og == sorted_update:
-            valid_updates.append(og)
+            valid_updates.append(sorted_update)
     return valid_updates
 
 
+def get_repaired_wrong_updates(rules: Dict[int, Page], updates: List[int]) -> List[List[Page]]:
+    repaired_updates = []
+    for update in updates:
+        og = [u for u in update]
+        sorted_update = sorted([rules_db[u] for u in update])
+        if og != sorted_update:
+            repaired_updates.append(sorted_update)
+    return repaired_updates
+
+
 def solve_part_2(file_path: str):
-    pass
+    rules_raw, updates_raw = process_file(file_path)    
+    updates = []
+    for update in updates_raw:
+        updates.append([int(page) for page in update.split(",")])
+    rules_hash = build_rules(rules_raw)
+    valid_updates = get_repaired_wrong_updates(rules_hash, updates)
+    total = 0
+    for update in valid_updates:
+        middle = int(len(update) / 2)
+        total += update[middle].num
+    return total
 
 
 def solve_part_1(file_path: str) -> int:
@@ -79,7 +99,7 @@ def solve_part_1(file_path: str) -> int:
     total = 0
     for update in valid_updates:
         middle = int(len(update) / 2)
-        total += update[middle]
+        total += update[middle].num
     return total
 
 
@@ -116,7 +136,7 @@ if __name__ == "__main__":
     if args.part == 1:
         result = solve_part_1(file_path)
     elif args.part == 2:
-        result = solve_part_1(file_path)
+        result = solve_part_2(file_path)
     else:
         exit(0)
 
