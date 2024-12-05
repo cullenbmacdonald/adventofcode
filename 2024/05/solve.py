@@ -69,14 +69,18 @@ def solve_part_2(file_path: str):
     pass
 
 
-def solve_part_1(file_path: str):
+def solve_part_1(file_path: str) -> int:
     rules_raw, updates_raw = process_file(file_path)    
     updates = []
     for update in updates_raw:
         updates.append([int(page) for page in update.split(",")])
     rules_hash = build_rules(rules_raw)
     valid_updates = filter_valid_updates(rules_hash, updates)
-    print(valid_updates)
+    total = 0
+    for update in valid_updates:
+        middle = int(len(update) / 2)
+        total += update[middle]
+    return total
 
 
 #### TEMPLATE FOR EACH DAY BEGIN NOW
