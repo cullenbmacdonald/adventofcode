@@ -1,7 +1,7 @@
 use std::{fs::read_to_string, error::Error};
 
 fn process_file() -> Result<(Vec<u32>, Vec<u32>), Box<dyn Error>> {
-    let content = read_to_string("input.txt")?; // Store the string in a variable
+    let content = read_to_string("test.txt")?; // Store the string in a variable
     let lines = content.lines(); // Use the lines iterator
 
     let (mut left, mut right): (Vec<u32>, Vec<u32>) = lines
@@ -28,8 +28,12 @@ fn solve_01(left: &[u32], right: &[u32]) -> u32 {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let (left, right) = process_file()?;
-
-    println!("{}", solve_01(&left, &right));
+    match process_file() {
+        Ok((left, right)) => {
+            println!("do we get here?");
+            println!("{}", solve_01(&left, &right));
+        },
+        Err(e) => todo!(),
+    }
     Ok(())
 }
