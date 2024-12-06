@@ -10,7 +10,7 @@ moves = {
     "left": (-1, 0)
 }
 
-def build_sparse_positions(grid: List[List[str]]) -> Set[Tuple[int]]:
+def get_obstacles(grid: List[List[str]]) -> Set[Tuple[int]]:
     obstacles = set()
     for y, row in enumerate(grid):
         for x, cell in enumerate(row):
@@ -26,7 +26,9 @@ def guard_start_position(grid: List[List[str]]) -> Tuple[int]:
                 return (x, y)
 
 
-def guard_inbounds(position: Tuple[int], max_x: int, max_y) -> bool:
+def guard_inbounds(position: Tuple[int], grid: List[List[str]]) -> bool:
+    max_x = len(grid[0]) - 1
+    max_y = len(grid) - 1
     return (position[0] >= 0 and position[0] <= max_x) and \
         (position[1] >= 0 and position[1] <= max_y)
 
@@ -50,7 +52,40 @@ def print_grid(grid):
     
 
 def solve_part_2(file_path: str):
-    pass
+    grid = []
+    with open(file_path) as file:
+        for row in file:
+            grid.append([cell for cell in row.strip()])
+
+    obstacles = get_obstacles(grid)
+    placed_obstacles = set()
+    # For progress logging
+    total = len(grid) * len(grid[0])
+    count = 0
+
+    # Ok lets put a temporary obstacle in each cell and see if we get a loop
+    for temp_obs in [(obs_y, obs_x) for obs_y in range(len(grid)) for obs_x in range(len(grid))]:
+        visited = set()
+        guard_position = guard_start_position(grid)
+        direction_i = 0
+        count +=1
+
+        print(f"checking {count} out of {total} potential obstacles")
+
+        if temp_obs in obstacles:
+            continue
+        obstacles.add(temp_obs)
+
+        while guard_inbounds(guard_position, grid):
+            visited.add((guard_position, direction_i))
+            guard_position, direction_i = walk(guard_position, direction_i, obstacles)
+            
+            # If we've been here going this direction before, then we're in a lop
+            if (guard_position, direction_i) in visited:
+                placed_obstacles.add(temp_obs)
+                break
+        obstacles = get_obstacles(grid)
+    return len(placed_obstacles)
 
 
 def solve_part_1(file_path: str):
@@ -59,20 +94,15 @@ def solve_part_1(file_path: str):
         for row in file:
             grid.append([cell for cell in row.strip()])
 
-    obstacles = build_sparse_positions(grid)
+    obstacles = get_obstacles(grid)
     guard_position = guard_start_position(grid)
     direction_i = 0
-    max_x = len(grid[0]) - 1
-    max_y = len(grid) - 1
-    print_grid(grid)
 
     visited = set()
-    while guard_inbounds(guard_position, max_x, max_y):
+    while guard_inbounds(guard_position, grid):
         visited.add(guard_position)
-        grid[guard_position[1]][guard_position[0]] = "X"
         guard_position, direction_i = walk(guard_position, direction_i, obstacles)
         
-    print_grid(grid)
     return len(visited)
 
 
