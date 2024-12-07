@@ -12,10 +12,10 @@ def split_line(line: set) -> Tuple[int, List[int]]:
     return add, nums
 
 
-def process_line(line: str) -> (bool, int):
+def process_line(line: str, operators: List[str]) -> (bool, int):
     total, nums = split_line(line)
     start = nums[0]
-    sequences = itertools.product(["+", "*"], repeat=len(nums) - 1)
+    sequences = itertools.product(operators, repeat=len(nums) - 1)
 
     for sequence in sequences:
         current = start
@@ -25,19 +25,28 @@ def process_line(line: str) -> (bool, int):
                 current += n
             elif op == "*":
                 current *= n
+            elif op == "||":
+                current = int(f"{current}{n}")
         if current == total:
             return True, total
 
     return False, total
 
+
 def solve_part_2(file_path: str):
-    pass
+    valid = []
+    with open(file_path) as file:
+        for line in file:
+            result, amt = process_line(line, ["+", "*", "||"])
+            if result:
+                valid.append(amt)
+    return sum(valid)
 
 def solve_part_1(file_path: str):
     valid = []
     with open(file_path) as file:
         for line in file:
-            result, amt = process_line(line)
+            result, amt = process_line(line, ["+", "*"])
             if result:
                 valid.append(amt)
     return sum(valid)
