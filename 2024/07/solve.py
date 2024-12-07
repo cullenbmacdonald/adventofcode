@@ -42,6 +42,7 @@ def solve_part_2(file_path: str):
                 valid.append(amt)
     return sum(valid)
 
+
 def solve_part_1(file_path: str):
     valid = []
     with open(file_path) as file:
