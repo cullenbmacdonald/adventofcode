@@ -50,7 +50,7 @@ def solve_part_2(file_path: str):
 
 def solve_part_1(file_path: str):
     grid = get_file_contents(file_path)
-    ants = set([(value, (x, y)) for y, row in enumerate(grid) for x, value in enumerate(row) if value != "."])
+    ants = [(value, (x, y)) for y, row in enumerate(grid) for x, value in enumerate(row) if value != "."]
     found_nodes = set() # (dimension, ant1, ant2) order doesnt matter. can be more than one node at a location
     max_x = len(grid[0])
     max_y = len(grid)
@@ -61,36 +61,31 @@ def solve_part_1(file_path: str):
         if x < 0 or x >= max_x:
             return False
         return True
+    
+    cursor = 0
+    while cursor < len(ants):
+        curr_ant, curr_index = ants[cursor]
+        for ant, index in ants[cursor + 1:]:
+            if ant == curr_ant and curr_index != index:
+                # Look in the same direction/distance from the current index to the next one
+                potential_antinode_x = index[0] + (index[0] - curr_index[0])
+                potential_antinode_y = index[1] + (index[1] - curr_index[1])
+                if in_bounds(potential_antinode_x, potential_antinode_y):
+                    found_nodes.add((potential_antinode_x, potential_antinode_y))
+                
+                # Do it the other way because we arent ever iterating the full ant list n times
+                potential_antinode_x = curr_index[0] + (curr_index[0] - index[0])
+                potential_antinode_y = curr_index[1] + (curr_index[1] - index[1])
+                if in_bounds(potential_antinode_x, potential_antinode_y):
+                    found_nodes.add((potential_antinode_x, potential_antinode_y))
+        cursor += 1
 
-    # go through each ant
-    for ant in ants:
-        letter = ant[0]
-        x = ant[1][0]
-        y = ant[1][1]
-
-        distance = 1
-        while True:
-            surrounding = surrounding_indices(x, y, distance)
-            grid_copy = copy.copy(grid)
-            if not any([in_bounds(*i) for i in surrounding]):
-                break
-            for next_index in surrounding_indices(x, y, distance):
-                if not in_bounds(*next_index):
-                    continue
-                if grid[next_index[1]][next_index[0]] == letter:
-                    potential_antinode_x = next_index[0] + (next_index[0] - x)
-                    potential_antinode_y = next_index[1] + (next_index[1] - y)
-                    if in_bounds(potential_antinode_x, potential_antinode_y):
-                        found_nodes.add((letter, (potential_antinode_x, potential_antinode_y)))
-                grid_copy[next_index[1]][next_index[0]] = "+"
-            print_grid(grid)
-            from pdb import set_trace; set_trace()
-            distance += 1
-
-
-    for n in found_nodes:
-        i = n[1]
-        grid[i[1]][i[0]] = "#"
+    for i in found_nodes:
+        current_value = grid[i[1]][i[0]]
+        if current_value == "#":
+            grid[i[1]][i[0]] = "&"
+        else:
+            grid[i[1]][i[0]] = "#"
     print_grid(grid)
     return len(found_nodes)
 
