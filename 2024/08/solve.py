@@ -2,40 +2,9 @@ import argparse, itertools, copy
 from argparse import Namespace
 from typing import List, Dict, Set, Tuple
 
-U = "up"
-UR = "up-right"
-R = "right"
-DR = "down-right"
-D = "down"
-DL = "down-left"
-L = "left"
-UL = "up-left"
-
 def get_file_contents(file_path: str) -> List[List[str]]:
     with open(file_path) as file:
         return [[l.strip() for l in row.strip()] for row in file]
-
-
-def surrounding_indices(x: int, y: int, distance: int) -> List[List[int]]:
-    return [
-        [x - distance, y - distance], [x, y - distance], [x + distance, y - distance],
-        [x - distance, y],                 [x + distance, y],
-        [x - distance, y + distance], [x, y + distance], [x + distance, y + distance]
-    ]
-
-def get_next_index(x: int, y: int, dir: str, distance: int) -> Tuple[int]:
-    dirs = {
-        U: (x, y - distance),
-        UR: (x + distance, y - distance),
-        R: (x + distance, y),
-        DR: (x + distance, y + distance),
-        D: (x, y + distance),
-        DL: (x - distance, y + distance),
-        L: (x - distance, y),
-        UL: (x - distance, y - distance)
-    }
-
-    return dirs[dir]
 
 
 def print_grid(grid):
@@ -43,15 +12,15 @@ def print_grid(grid):
         print(''.join(row))
     print("\n")
 
+def get_next_index(from_i: Tuple[int, int], to_i: Tuple[int, int]) -> Tuple[int, int]:
+    potential_antinode_x = to_i[0] + (to_i[0] - from_i[0])
+    potential_antinode_y = to_i[1] + (to_i[1] - from_i[1])
+    return (potential_antinode_x, potential_antinode_y)
 
-def solve_part_2(file_path: str):
-    pass
-
-
-def solve_part_1(file_path: str):
+def solve(file_path: str, keep_going=False):
     grid = get_file_contents(file_path)
     ants = [(value, (x, y)) for y, row in enumerate(grid) for x, value in enumerate(row) if value != "."]
-    found_nodes = set() # (dimension, ant1, ant2) order doesnt matter. can be more than one node at a location
+    found_nodes = set()
     max_x = len(grid[0])
     max_y = len(grid)
 
@@ -65,26 +34,33 @@ def solve_part_1(file_path: str):
     cursor = 0
     while cursor < len(ants):
         curr_ant, curr_index = ants[cursor]
-        for ant, index in ants[cursor + 1:]:
+        for ant, index in ants[cursor+1:]: # only look at ants after me
             if ant == curr_ant and curr_index != index:
-                # Look in the same direction/distance from the current index to the next one
-                potential_antinode_x = index[0] + (index[0] - curr_index[0])
-                potential_antinode_y = index[1] + (index[1] - curr_index[1])
-                if in_bounds(potential_antinode_x, potential_antinode_y):
-                    found_nodes.add((potential_antinode_x, potential_antinode_y))
                 
-                # Do it the other way because we arent ever iterating the full ant list n times
-                potential_antinode_x = curr_index[0] + (curr_index[0] - index[0])
-                potential_antinode_y = curr_index[1] + (curr_index[1] - index[1])
-                if in_bounds(potential_antinode_x, potential_antinode_y):
-                    found_nodes.add((potential_antinode_x, potential_antinode_y))
+                # if we dont care about distance, and we have a match, then add the node we're looking towards and ourselves
+                if keep_going:
+                    found_nodes.add(index)
+                    found_nodes.add(curr_index)
+
+                # Look in the same direction/distance from the current index to the next one
+                # Because we'll never go the "other way", we need to process both directions 
+                for to_i, from_i in [(curr_index, index), (index, curr_index)]:
+                    potential = get_next_index(from_i, to_i)
+                    while in_bounds(*potential):
+                        found_nodes.add(potential)
+                        if not keep_going:
+                            break
+                        from_i = to_i
+                        to_i = potential
+                        potential = get_next_index(from_i, to_i)
+
+        # Increment cursor to start looking at the next ant
         cursor += 1
 
+    # Print the thing for debugging
     for i in found_nodes:
         current_value = grid[i[1]][i[0]]
-        if current_value == "#":
-            grid[i[1]][i[0]] = "&"
-        else:
+        if current_value == ".":
             grid[i[1]][i[0]] = "#"
     print_grid(grid)
     return len(found_nodes)
@@ -121,9 +97,9 @@ if __name__ == "__main__":
         file_path = "input.txt"
 
     if args.part == 1:
-        result = solve_part_1(file_path)
+        result = solve(file_path)
     elif args.part == 2:
-        result = solve_part_2(file_path)
+        result = solve(file_path, keep_going=True)
     else:
         exit(0)
 
