@@ -1,4 +1,4 @@
-import argparse, itertools
+import argparse, itertools, copy
 from argparse import Namespace
 from typing import List, Dict, Set, Tuple
 
@@ -16,6 +16,13 @@ def get_file_contents(file_path: str) -> List[List[str]]:
         return [[l.strip() for l in row.strip()] for row in file]
 
 
+def surrounding_indices(x: int, y: int, distance: int) -> List[List[int]]:
+    return [
+        [x - distance, y - distance], [x, y - distance], [x + distance, y - distance],
+        [x - distance, y],                 [x + distance, y],
+        [x - distance, y + distance], [x, y + distance], [x + distance, y + distance]
+    ]
+
 def get_next_index(x: int, y: int, dir: str, distance: int) -> Tuple[int]:
     dirs = {
         U: (x, y - distance),
@@ -29,6 +36,12 @@ def get_next_index(x: int, y: int, dir: str, distance: int) -> Tuple[int]:
     }
 
     return dirs[dir]
+
+
+def print_grid(grid):
+    for row in grid:
+        print(''.join(row))
+    print("\n")
 
 
 def solve_part_2(file_path: str):
@@ -55,17 +68,30 @@ def solve_part_1(file_path: str):
         x = ant[1][0]
         y = ant[1][1]
 
-        for direction in [U, UR, R, DR, D, DL, L, UL]:
-            distance = 1
-            next_index = get_next_index(x, y, direction, distance)
-            while in_bounds(*next_index):
+        distance = 1
+        while True:
+            surrounding = surrounding_indices(x, y, distance)
+            grid_copy = copy.copy(grid)
+            if not any([in_bounds(*i) for i in surrounding]):
+                break
+            for next_index in surrounding_indices(x, y, distance):
+                if not in_bounds(*next_index):
+                    continue
                 if grid[next_index[1]][next_index[0]] == letter:
-                    potential_antinode = get_next_index(next_index[0], next_index[1], direction, distance)
-                    if in_bounds(*potential_antinode):
-                        found_nodes.add((letter, potential_antinode))
-                distance += 1
-                next_index = get_next_index(x, y, direction, distance)
+                    potential_antinode_x = next_index[0] + (next_index[0] - x)
+                    potential_antinode_y = next_index[1] + (next_index[1] - y)
+                    if in_bounds(potential_antinode_x, potential_antinode_y):
+                        found_nodes.add((letter, (potential_antinode_x, potential_antinode_y)))
+                grid_copy[next_index[1]][next_index[0]] = "+"
+            print_grid(grid)
+            from pdb import set_trace; set_trace()
+            distance += 1
 
+
+    for n in found_nodes:
+        i = n[1]
+        grid[i[1]][i[0]] = "#"
+    print_grid(grid)
     return len(found_nodes)
 
 
