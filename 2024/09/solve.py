@@ -9,58 +9,60 @@ def solve_part_2(file_path: str):
 
 def solve_part_1(file_path: str) -> int:
     blocks = defrag(get_file_contents(file_path))
-    from pdb import set_trace; set_trace()
     return calculate_checksum(blocks)
 
 
 def get_file_contents(file_path: str) -> List[int]:
     with open(file_path) as file:
         return [int(c.strip()) for row in file for c in row.strip()]
-    
 
-def defrag(blocks: List[int]) -> List[int]:
+
+def convert_blocks(blocks: List[int]) -> any:
+    # First build an array of sized/id blocks
     left_cursor = 0
-    right_cursor = len(blocks) - 1
-    right_id = int(right_cursor / 2)
-    left_id = 0
+    insert_id = 0
     d_blocks = []
 
-
-    insert_id =  None
-    left_id = 0
-    direction = "from_left"
-    while right_cursor > 0 and left_cursor < len(blocks) - 1:
-        if left_cursor % 2 == 0 or left_cursor == 0:
-            insert_id = left_id
-            size_block = blocks[left_cursor]
-            direction = "from_left"
+    while left_cursor < len(blocks):
+        size = blocks[left_cursor]
+        if left_cursor % 2 > 0:
+            value = None
         else:
-            insert_id = right_id
-            size_block = blocks[right_cursor]
-            direction = "from_right"
-
-        size_free = blocks[left_cursor]
-
-        while size_free > 0 and size_block > 0:
-            d_blocks.append(insert_id)
-            size_free -= 1
-            size_block -= 1
-
-        if size_free == 0:
-            left_cursor += 1
-
-        if size_block == 0:
-            if direction == "from_right":
-                right_cursor -= 2
-                right_id -= 1
-            else:
-                left_id += 1
-
+            value = insert_id
+        while size > 0:
+            d_blocks.append(value)
+            size -= 1
+        if left_cursor % 2 == 0:
+            insert_id += 1
+        left_cursor += 1
+    
     return d_blocks
 
 
+def defrag(blocks: List[int]) -> List[int]:
+    blocks = convert_blocks(blocks)
+
+    # Pack the bins
+    right_cursor = len(blocks) - 1
+    left_cursor = 0
+
+    while right_cursor > 0 and left_cursor < len(blocks) - 1:
+        if blocks[right_cursor] is None:
+            right_cursor -= 1
+            continue
+        if blocks[left_cursor] is None:
+            block_id = blocks.pop()
+            if block_id != None:
+                blocks[left_cursor] = block_id
+                right_cursor -= 1
+        else:
+            left_cursor += 1        
+
+    return [block for block in blocks if block is not None]
+
+
 def calculate_checksum(blocks: List[int]) -> int:
-    pass
+    return sum([i * v for i, v in enumerate(blocks)])
 
 
 #### TEMPLATE FOR EACH DAY BEGIN NOW
