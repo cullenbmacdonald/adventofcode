@@ -55,8 +55,10 @@ def defrag_contiguous_blocks(blocks: List[int]) -> List[int]:
 
     right_cursor = len(blocks) - 1
     moved = set()
+    seen = set()
     while right_cursor > 0:
         left_cursor = 0
+        #print(f"{right_cursor}/{len(blocks)}")
         file_id, file_size = blocks[right_cursor]
 
         if file_id >= 0:
@@ -70,7 +72,28 @@ def defrag_contiguous_blocks(blocks: List[int]) -> List[int]:
                         blocks.insert(left_cursor + 1, (-1, remaining_size))
                         right_cursor += 1
                     moved.add(blocks[left_cursor])
+                    new_blocks = []
+                    for i, (block_id, block_size) in enumerate(blocks):
+                        if block_id == -1:
+                            new_size = block_size
+                            for other in [i + 1]:
+                                try:
+                                    other_id, other_size = blocks[other]
+                                except IndexError:
+                                    continue
+                                if other_id == -1:
+                                    new_size += other_size
+                                    blocks.pop(other)
+                            blocks.pop(i)
+                            new_blocks.append((-1, new_size)) 
+                        else:
+                            new_blocks.append((block_id, block_size))
+
+                    from pdb import set_trace; set_trace()
+                    blocks = new_blocks
+                    right_cursor = len(blocks) - 1
                     break
+                seen.add(file_id)
                 left_cursor += 1
         right_cursor -= 1
     
