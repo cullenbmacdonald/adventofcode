@@ -4,11 +4,13 @@ from typing import List, Dict, Set, Tuple
 
 
 def solve_part_2(file_path: str):
+    blocks = defrag_contiguous_blocks(get_file_contents(file_path))
+    return calculate_checksum(blocks)
     pass
 
 
 def solve_part_1(file_path: str) -> int:
-    blocks = defrag(get_file_contents(file_path))
+    blocks = defrag_split_blocks(get_file_contents(file_path))
     return calculate_checksum(blocks)
 
 
@@ -39,7 +41,54 @@ def convert_blocks(blocks: List[int]) -> any:
     return d_blocks
 
 
-def defrag(blocks: List[int]) -> List[int]:
+def defrag_contiguous_blocks(blocks: List[int]) -> List[int]:
+    empty = [(-1, b_size) for i, b_size in enumerate(blocks) if i % 2 > 0 and b_size != 0]
+    files = [(file_id, file_size) for file_id, file_size in enumerate([b for i, b in enumerate(blocks) if i % 2 == 0])]
+
+    blocks = []
+    for i, file in enumerate(files):
+        blocks.append(file)
+        try:
+            blocks.append(empty[i])
+        except IndexError:
+            pass
+
+    right_cursor = len(blocks) - 1
+    moved = set()
+    while right_cursor > 0:
+        left_cursor = 0
+        file_id, file_size = blocks[right_cursor]
+
+        if file_id >= 0:
+            while left_cursor < len(blocks) and left_cursor < right_cursor:
+                look_id, look_size = blocks[left_cursor]
+                remaining_size = look_size - file_size
+                if look_id < 0 and remaining_size >= 0 and (file_id, file_size) not in moved:
+                    blocks[left_cursor] = (file_id, file_size)
+                    blocks[right_cursor] = (-1, file_size)
+                    if remaining_size > 0:
+                        blocks.insert(left_cursor + 1, (-1, remaining_size))
+                        right_cursor += 1
+                    moved.add(blocks[left_cursor])
+                    break
+                left_cursor += 1
+        right_cursor -= 1
+    
+    ret = []
+
+    for block in blocks:
+        block_id, block_size = block
+        for _ in range(block_size):
+            if block_id == -1:
+                ret.append(None)
+            else:
+                ret.append(block_id)
+
+    from pdb import set_trace; set_trace()
+    return ret
+    
+
+def defrag_split_blocks(blocks: List[int]) -> List[int]:
     blocks = convert_blocks(blocks)
 
     # Pack the bins
@@ -58,11 +107,11 @@ def defrag(blocks: List[int]) -> List[int]:
         else:
             left_cursor += 1        
 
-    return [block for block in blocks if block is not None]
+    return [block for block in blocks]
 
 
 def calculate_checksum(blocks: List[int]) -> int:
-    return sum([i * v for i, v in enumerate(blocks)])
+    return sum([i * v for i, v in enumerate(blocks) if v is not None])
 
 
 #### TEMPLATE FOR EACH DAY BEGIN NOW
