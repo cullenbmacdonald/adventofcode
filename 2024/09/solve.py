@@ -42,7 +42,7 @@ def convert_blocks(blocks: List[int]) -> any:
 
 
 def defrag_contiguous_blocks(blocks: List[int]) -> List[int]:
-    empty = [(-1, b_size) for i, b_size in enumerate(blocks) if i % 2 > 0 and b_size != 0]
+    empty = [(-1, b_size) for i, b_size in enumerate(blocks) if i % 2 > 0]
     files = [(file_id, file_size) for file_id, file_size in enumerate([b for i, b in enumerate(blocks) if i % 2 == 0])]
 
     blocks = []
@@ -54,47 +54,24 @@ def defrag_contiguous_blocks(blocks: List[int]) -> List[int]:
             pass
 
     right_cursor = len(blocks) - 1
-    moved = set()
     seen = set()
     while right_cursor > 0:
         left_cursor = 0
-        #print(f"{right_cursor}/{len(blocks)}")
         file_id, file_size = blocks[right_cursor]
 
-        if file_id >= 0:
+        if file_id >= 0 and file_id not in seen:
             while left_cursor < len(blocks) and left_cursor < right_cursor:
                 look_id, look_size = blocks[left_cursor]
                 remaining_size = look_size - file_size
-                if look_id < 0 and remaining_size >= 0 and (file_id, file_size) not in moved:
+
+                if look_id < 0 and remaining_size >= 0 and (file_id, file_size):
                     blocks[left_cursor] = (file_id, file_size)
                     blocks[right_cursor] = (-1, file_size)
                     if remaining_size > 0:
                         blocks.insert(left_cursor + 1, (-1, remaining_size))
-                        right_cursor += 1
-                    moved.add(blocks[left_cursor])
-                    new_blocks = []
-                    for i, (block_id, block_size) in enumerate(blocks):
-                        if block_id == -1:
-                            new_size = block_size
-                            for other in [i + 1]:
-                                try:
-                                    other_id, other_size = blocks[other]
-                                except IndexError:
-                                    continue
-                                if other_id == -1:
-                                    new_size += other_size
-                                    blocks.pop(other)
-                            blocks.pop(i)
-                            new_blocks.append((-1, new_size)) 
-                        else:
-                            new_blocks.append((block_id, block_size))
-
-                    from pdb import set_trace; set_trace()
-                    blocks = new_blocks
-                    right_cursor = len(blocks) - 1
                     break
-                seen.add(file_id)
                 left_cursor += 1
+            seen.add(file_id)
         right_cursor -= 1
     
     ret = []
@@ -107,7 +84,6 @@ def defrag_contiguous_blocks(blocks: List[int]) -> List[int]:
             else:
                 ret.append(block_id)
 
-    from pdb import set_trace; set_trace()
     return ret
     
 
