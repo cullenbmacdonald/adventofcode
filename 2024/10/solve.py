@@ -24,7 +24,7 @@ def in_bounds(x: int, y: int, grid: List[List[int]]) -> bool:
     return True
     
 
-def solve_1(file_path: str) -> int:
+def solve(file_path: str, distinct=False) -> int:
     grid = get_file_contents(file_path)
     trailhead_pos = [] # list of tuple of trails
     for y, row in enumerate(grid):
@@ -32,7 +32,11 @@ def solve_1(file_path: str) -> int:
             if cell == 0:
                 trailhead_pos.append(((x, y),))
 
-    trailhead_peaks = defaultdict(set)
+    if distinct:
+        trailhead_peaks = defaultdict(tuple)
+    else:
+        trailhead_peaks = defaultdict(set)
+
     positions = trailhead_pos
 
     while len(positions) > 0:
@@ -48,13 +52,12 @@ def solve_1(file_path: str) -> int:
                 extended_trail = trail + ((looking_x, looking_y),)
                 positions.append(extended_trail)
                 if cell == 9:
-                    trailhead_peaks[trail[0]].add(extended_trail[-1])
+                    if distinct:
+                        trailhead_peaks[trail[0]] += (trail,)
+                    else:
+                        trailhead_peaks[trail[0]].add(extended_trail[-1])
     
     return sum([len(peaks) for peaks in trailhead_peaks.values()])
-
-
-def solve_2(file_path: str):
-    pass
 
 
 #### TEMPLATE FOR EACH DAY BEGIN NOW
@@ -88,9 +91,9 @@ if __name__ == "__main__":
         file_path = "input.txt"
 
     if args.part == 1:
-        result = solve_1(file_path)
+        result = solve(file_path)
     elif args.part == 2:
-        result = solve_2(file_path)
+        result = solve(file_path, distinct=True)
     else:
         exit(0)
 
