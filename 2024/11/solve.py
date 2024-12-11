@@ -42,6 +42,33 @@ class Node:
             self.value *= 2024
 
 
+def process_one(value: int, this_blink_count: int, computed: Dict[int, int]) -> int:
+    key = (value, this_blink_count)
+    count = computed.get(key, None)
+    if count:
+        return count
+    count = 1
+    for i in range(this_blink_count):
+        str_value = str(value)
+        str_length = len(str_value)
+        if value == 0:
+            value = 1
+        elif str_length % 2 == 0:
+            left = str_value[:str_length//2]
+            right = str_value[str_length//2:]
+            value = int(left)
+            count += process_one(int(right), this_blink_count - 1 - i, computed)
+        else: 
+            value *= 2024
+    computed[key] = count
+    return computed[key]
+
+
+def solve_fast(file_path: str, blink_count: int) -> int:
+    computed: Dict[int, int] = {}
+    return sum(process_one(value, blink_count, computed) for value in get_file_contents(file_path))
+
+
 def solve(file_path: str, blink_count: int) -> int:
     head: Node | None = None
     prev: Node | None = None
@@ -101,9 +128,9 @@ if __name__ == "__main__":
         file_path = "input.txt"
 
     if args.part == 1:
-        result = solve(file_path, blink_count=25)
+        result = solve_fast(file_path, blink_count=25)
     elif args.part == 2:
-        result = solve(file_path, blink_count=75)
+        result = solve_fast(file_path, blink_count=75)
     else:
         exit(0)
 
