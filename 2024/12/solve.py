@@ -9,12 +9,14 @@ def get_file_contents(file_path: str) -> List[List[str]]:
         return [[l.strip() for l in row.strip()] for row in file]
 
 
-# returns right down left up
+# returns up, down, left, right
+# left doesnt really matter...i dont think. 
 def surrounding_indices(x: int, y: int) -> List[Tuple[int]]:
     return [
-                   (x, y - 1), 
-        (x - 1, y),           (x + 1, y),
-                    (x, y + 1)
+        (x, y - 1), 
+        (x, y + 1),
+        (x - 1, y),
+        (x + 1, y)
     ]
 
 
@@ -32,38 +34,47 @@ def get_next_cells(x: int, y: int, grid: List[List[int]]) -> List[Tuple[int, int
     return [i for i in indices if in_bounds(i, grid)]
 
 
-def solve(file_path: str) -> int:
-    grid = get_file_contents(file_path)
-
-    # First find contiguous areas
+def contiguous_areas(grid: List[List[str]]) -> List[List[Tuple[int, int]]]:
     seen: Set[Tuple[int, int]] = set()
-    areas: List[List[Tuple[int, int]]] = []
+    # Last index is (area, perimeter)
+    plots: List[List[Tuple[int, int]]] = []
 
     for y, row in enumerate(grid):
         for x, cell in enumerate(row):
             if (x, y) in seen:
                 continue
-            area = [(x ,y)]
+            plot = [(x ,y)]
+            area = 1
+            perimeter = 4
             seen.add((x, y))
-            local_seen = set()
-            local_seen.add((x, y))
             next_options = get_next_cells(x, y, grid)
             while next_options:
                 looking = next_options.pop()
-                if looking in local_seen or looking in seen:
-                    continue 
-                local_seen.add(looking)
-                try:
-                    value = grid[looking[1]][looking[0]]
-                except IndexError:
-                    from pdb import set_trace; set_trace()
+                this_perimeter = 4
+                value = grid[looking[1]][looking[0]]
                 if value == cell:
-                    area.append(looking)
+                    perimeter -= 1
+                    if looking in seen:
+                        continue 
+                    area += 1
+                    perimeter += 4
+                    plot.append(looking)
                     seen.add(looking)
                     next_options += get_next_cells(looking[0], looking[1], grid)
-            areas.append(area)
-    from pdb import set_trace; set_trace()
-    return 1
+            plot.append((area, perimeter))
+            plots.append(plot)
+    return plots 
+
+
+def solve(file_path: str) -> Tuple[int, int]:
+    grid = get_file_contents(file_path)
+
+    plots = contiguous_areas(grid)
+    prices = []
+    for plot in plots:
+        area, perimeter = plot[-1]
+        prices.append(area * perimeter)
+    return sum(prices)
             
  
 
