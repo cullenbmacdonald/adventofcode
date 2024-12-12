@@ -3,7 +3,6 @@ import argparse, itertools, copy
 from collections import defaultdict
 from argparse import Namespace
 from typing import List, Dict, Set, Tuple, Type
-from gmpy2 import mpz
 
 def get_file_contents(file_path: str) -> List[int]:
     with open(file_path) as file:
