@@ -4,13 +4,67 @@ from collections import defaultdict
 from argparse import Namespace
 from typing import List, Dict, Set, Tuple, Type
 
-def get_file_contents(file_path: str) -> List[int]:
+def get_file_contents(file_path: str) -> List[List[str]]:
     with open(file_path) as file:
-        pass
+        return [[l.strip() for l in row.strip()] for row in file]
 
 
-def solve(file_path: str):
-    pass
+# returns right down left up
+def surrounding_indices(x: int, y: int) -> List[Tuple[int]]:
+    return [
+                   (x, y - 1), 
+        (x - 1, y),           (x + 1, y),
+                    (x, y + 1)
+    ]
+
+
+def in_bounds(index: Tuple[int], grid: List[List[int]]) -> bool:
+    x, y = index
+    if y < 0 or y >= len(grid):
+        return False
+    if x < 0 or x >= len(grid[0]):
+        return False
+    return True
+
+
+def get_next_cells(x: int, y: int, grid: List[List[int]]) -> List[Tuple[int, int]]:
+    indices = surrounding_indices(x, y)
+    return [i for i in indices if in_bounds(i, grid)]
+
+
+def solve(file_path: str) -> int:
+    grid = get_file_contents(file_path)
+
+    # First find contiguous areas
+    seen: Set[Tuple[int, int]] = set()
+    areas: List[List[Tuple[int, int]]] = []
+
+    for y, row in enumerate(grid):
+        for x, cell in enumerate(row):
+            if (x, y) in seen:
+                continue
+            area = [(x ,y)]
+            seen.add((x, y))
+            local_seen = set()
+            local_seen.add((x, y))
+            next_options = get_next_cells(x, y, grid)
+            while next_options:
+                looking = next_options.pop()
+                if looking in local_seen or looking in seen:
+                    continue 
+                local_seen.add(looking)
+                try:
+                    value = grid[looking[1]][looking[0]]
+                except IndexError:
+                    from pdb import set_trace; set_trace()
+                if value == cell:
+                    area.append(looking)
+                    seen.add(looking)
+                    next_options += get_next_cells(looking[0], looking[1], grid)
+            areas.append(area)
+    from pdb import set_trace; set_trace()
+    return 1
+            
  
 
 #### TEMPLATE FOR EACH DAY BEGIN NOW
